@@ -1,0 +1,9 @@
+*.pyc
+*.xlsx
+*.xml
+*.png
+*.log
+*.tif
+**/data
+**/.idea
+**/result
