@@ -7,7 +7,7 @@ import time
 import yaml
 import pandas as pd
 from functions import (COLUMNS_TOTAL, get_max_dataframe, extract_all_stress_temperature,
-                       get_file_name_modification_date, isdir_and_make, add_ys_uts,
+                       get_rst_file_name_modification_date, isdir_and_make, add_ys_uts,
                        concat_dataframes_with_gaps, read_excel_with_merged_cells, rainflow_cycle,
                        rainflow_point, extract_yellow_cells_info, reorder_data)
 
@@ -53,7 +53,7 @@ class DPF_Stress_Temperature:
         self.exe_time = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
         print(f'Starting at: {self.exe_time}')
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if not os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self._load_abbreviation_material()  # 약자 읽기
             self._load_rst()  # model, rst 읽기
@@ -76,7 +76,7 @@ class DPF_Stress_Temperature:
             isdir_and_make(f'{RESULT_PATH}/{self.exe_time}')  # result 결과 시간 폴더 생성
         isdir_and_make(f'{RESULT_PATH}/Mode 1')  # result 결과 시간 폴더 생성
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self._load_result_format()
             self.write_result_xlsx(self.wrap_result(data_path=f'{DATA_PATH}/{parquet_path}'))
@@ -93,7 +93,7 @@ class DPF_Stress_Temperature:
         print(f'Starting at: {self.exe_time}')
         isdir_and_make(f'{RESULT_PATH}/Mode 2')  # result 폴더 생성
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self.wrap_temperature_result(data_path=f'{DATA_PATH}/{parquet_path}')
         else:
@@ -110,7 +110,7 @@ class DPF_Stress_Temperature:
 
         isdir_and_make(f'{RESULT_PATH}/Mode 3')  # result 폴더 생성
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self.wrap_all_nodes_result(data_path=f'{DATA_PATH}/{parquet_path}')
         else:
@@ -128,7 +128,7 @@ class DPF_Stress_Temperature:
 
         isdir_and_make(f'{RESULT_PATH}/Mode 4')  # result 폴더 생성
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self.wrap_specific_nodes_result(node_ids=nodes, data_path=f'{DATA_PATH}/{parquet_path}')
 
@@ -144,7 +144,7 @@ class DPF_Stress_Temperature:
 
         isdir_and_make(f'{RESULT_PATH}/Mode 5')  # result 폴더 생성
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self.wrap_layout_analysis(method='Static', data_path=f'{DATA_PATH}/{parquet_path}')
         self.stop('#5.Mode')
@@ -159,7 +159,7 @@ class DPF_Stress_Temperature:
 
         isdir_and_make(f'{RESULT_PATH}/Mode 6')  # result 폴더 생성
 
-        parquet_path = get_file_name_modification_date(self.rst_path)
+        parquet_path = get_rst_file_name_modification_date(self.rst_path)
         if os.path.isdir(f'{DATA_PATH}/{parquet_path}'):
             self.wrap_layout_analysis(method='Transient', data_path=f'{DATA_PATH}/{parquet_path}')
         self.stop('#6.Mode')
@@ -277,7 +277,7 @@ class DPF_Stress_Temperature:
         # 모든 Writer 객체 닫기
         for writer in writers.values():
             writer.close()
-
+    
         # 요약 데이터 반환
         return pd.DataFrame(summary_data, columns=RESULT_COLUMNS)
 
@@ -473,7 +473,7 @@ class DPF_Stress_Temperature:
 
     def _load_rst(self):
         # rst 파일 찾기
-        rst_file = [file for file in os.listdir(self.rst_path) if '.rst' in file]
+        rst_file = [file for file in os.listdir(self.rst_path) if file.endswith(".rst")]
         # rst 파일 직접 로드
         self.model = dpf.Model(os.path.join(self.rst_path, rst_file[0]))
         self.metadata = self.model.metadata

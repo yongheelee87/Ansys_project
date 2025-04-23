@@ -22,9 +22,10 @@ def isdir_and_make(dir_name: str):
         print(f"Success: Create {dir_name}\n")
 
 
-def get_file_name_modification_date(file_path):
+def get_rst_file_name_modification_date(file_path):
+    rst_file = [os.path.join(file_path, file) for file in os.listdir(file_path) if file.endswith(".rst")]
     # 파일의 마지막 수정 시간 얻기 (초 단위 timestamp)
-    mod_time_timestamp = os.path.getmtime(file_path)
+    mod_time_timestamp = os.path.getmtime(rst_file[0])
     # timestamp를 str객체로 변환
     mod_time_str = time.strftime('%Y%m%d_%H%M%S', time.localtime(mod_time_timestamp))
     file_source = '_'.join(file_path.split('\\')[-2:])
@@ -446,7 +447,7 @@ def get_max_dataframe(df, col):
     if col == "Temperature":
         column = COLUMNS_BASIC
     elif col == "Equivalent_Stress":
-        column = ["Time", "NodeID", col, "Temperature", "Principal_1"]
+        column = ["Time", "NodeID"] + COLUMNS_ORDER
     else:
         column = ["Time", "NodeID", col, "Temperature"]
     return df[df['NodeID'] == target_node_id].reset_index(drop=True)[column]
@@ -457,7 +458,7 @@ def extract_all_stress_temperature(df):
     df_temperature = df.loc[df.groupby('Time')['Temperature'].idxmax()].reset_index(drop=True)[COLUMNS_BASIC]
     lst_max_dataframes = [df_stress, df_temperature] + [get_max_dataframe(df=df, col=col_name) for col_name in COLUMNS_ORDER]
     max_stress = lst_max_dataframes[2].copy()
-    sign_values = np.sign(max_stress["Principal_1"])
+    sign_values = create_sign_from_larger_absolute(df=max_stress, col1='Principal_1', col2='Principal_3')
     max_stress['Equivalent_Stress'] = np.where(sign_values == 0, 1, sign_values) * max_stress['Equivalent_Stress']
     lst_max_dataframes.append(max_stress[COLUMNS_BASIC])
     lst_max_dataframes[2] = lst_max_dataframes[2][COLUMNS_BASIC]
@@ -468,6 +469,19 @@ def extract_all_stress_temperature(df):
 
     return lst_max_dataframes
 
+
+def create_sign_from_larger_absolute(df, col1, col2):
+    # 절대값이 큰 컬럼의 부호를 반영하는 새로운 컬럼 생성
+    sign_value = np.where(
+        abs(df[col1]) >= abs(df[col2]),
+        np.sign(df[col1]),  # col1의 절대값이 더 클 때 col1의 부호
+        np.where(
+            abs(df[col1]) < abs(df[col2]),
+            np.sign(df[col2]),  # col2의 절대값이 더 클 때 col2의 부호
+            np.sign(df[col1])  # col1의 부호
+        )
+    )
+    return sign_value
 
 def extract_yellow_cells_info(excel_file):
     """
